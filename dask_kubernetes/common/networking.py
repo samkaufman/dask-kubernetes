@@ -95,14 +95,16 @@ async def port_forward_service(service_name, namespace, remote_port, local_port=
 
 
 async def is_comm_open(ip, port, retries=10):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     while retries > 0:
-        result = sock.connect_ex((ip, port))
-        if result == 0:
-            return True
-        else:
-            time.sleep(2)
-            retries -= 1
+        # sockets cannot be reused after a connection refusal on all platforms,
+        # so: construct a new one on each iteration.
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            result = sock.connect_ex((ip, port))
+            if result == 0:
+                return True
+            else:
+                time.sleep(2)
+                retries -= 1
     return False
 
 
